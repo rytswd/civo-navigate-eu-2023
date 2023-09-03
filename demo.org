@@ -1,0 +1,75 @@
+#+title: Demo Steps
+The demo was only going through some simple installation step for Istio. However, Istio installation is not simple by any means.
+
+Because there will be a lot of code associated in this, I'm using Emacs with Org Mode file to run shell scripts, which are simple in essence, but can be time consuming to handle otherwise.
+
+* Set Up CA Certificates
+  
+** 1. Create temporary directory.
+#+begin_src bash
+  mkdir /tmp/civo-nav-mco-demo; cd /tmp/civo-nav-mco-demo
+  ls -aF
+#+end_src
+
+*** 1.1. Copy the demo repository.
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+  curl -sSL https://codeload.github.com/rytswd/kubecon-eu-2023/tar.gz/main \
+      -o kubecon-eu-2023.tar.gz
+  ls -aF
+#+end_src
+
+
+** 2. CA Certificates
+*** 2.1. Copy CA Certificate generation scripts from Istio.
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+  curl -sSL https://codeload.github.com/istio/istio/tar.gz/1.18.2 |
+      tar -xz --strip=2 istio-1.18.2/tools/certs;
+  pushd certs > /dev/null
+#+end_src
+
+*** 2.2. Create Root CA Certificate.
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+  make -f ./Makefile.selfsigned.mk root-ca
+#+end_src
+
+*** 2.3. Create Intermediate CA Certificates for each cluster.
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+  make -f ./Makefile.selfsigned.mk cluster-1-cacerts;
+  make -f ./Makefile.selfsigned.mk cluster-2-cacerts;
+  make -f ./Makefile.selfsigned.mk cluster-3-cacerts;
+  popd > /dev/null
+#+end_src
+
+*** 2.4. Create istio-system namespace in each cluster.
+#+begin_src bash
+  kubectl create namespace --context kind-cluster-1 istio-system;
+  kubectl create namespace --context kind-cluster-2 istio-system;
+  kubectl create namespace --context kind-cluster-3 istio-system;
+#+end_src
+
+*** 2.5. Create `cacerts` secret in each cluster.
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+  kubectl create secret --context kind-cluster-1 \
+      generic cacerts -n istio-system \
+      --from-file=./certs/cluster-1/ca-cert.pem \
+      --from-file=./certs/cluster-1/ca-key.pem \
+      --from-file=./certs/cluster-1/root-cert.pem \
+      --from-file=./certs/cluster-1/cert-chain.pem;
+  kubectl create secret --context kind-cluster-2 \
+      generic cacerts -n istio-system \
+      --from-file=./certs/cluster-2/ca-cert.pem \
+      --from-file=./certs/cluster-2/ca-key.pem \
+      --from-file=./certs/cluster-2/root-cert.pem \
+      --from-file=./certs/cluster-2/cert-chain.pem;
+  kubectl create secret --context kind-cluster-3 \
+      generic cacerts -n istio-system \
+      --from-file=./certs/cluster-3/ca-cert.pem \
+      --from-file=./certs/cluster-3/ca-key.pem \
+      --from-file=./certs/cluster-3/root-cert.pem \
+      --from-file=./certs/cluster-3/cert-chain.pem
+#+end_src
