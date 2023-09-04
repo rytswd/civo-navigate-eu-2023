@@ -694,6 +694,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
       kubectl apply --context cluster-3 --server-side -f -
 #+end_src
 
+
 ** 6.5. Deploy Prometheus for Istio Metrics
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
