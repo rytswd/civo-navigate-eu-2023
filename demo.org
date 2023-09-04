@@ -41,7 +41,7 @@ Because we would like to see all the file contents for better understanding of w
   cd /tmp/civo-nav-mco-demo
 
   curl -sSL https://codeload.github.com/rytswd/civo-navigate-eu-2023/tar.gz/main \
-      -o civo-navigate-eu-2023.tar.gz
+       -o civo-navigate-eu-2023.tar.gz
 
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
@@ -50,7 +50,11 @@ Because we would like to see all the file contents for better understanding of w
 * 1. Prepare Clusters
 
 ** Using Civo Clusters
-Using Civo clusters is a great way to get started quickly, and also to be able to share the environment with others. If you are using Civo clusters, let's make sure we have all the cluster credentials in place.
+Using Civo clusters is a great way to get started quickly, and also to be able to share the environment with others. Let's make sure we have all the cluster credentials in place.
+
+ℹ️ *NOTE: Cluster Creation*
+
+Because clusters can be easily created from the Civo console, or some other tooling such as Terraform or Crossplane, I will skip that part from the demo steps here.
 
 Assuming the name of the clusters created are ~cluster-1~, ~cluster-2~, and ~cluster-3~, the generated kubeconfig will each get the name like ~civo-cluster-1-kubeconfig~. The below also assumes the download directory of ~~/Downloads~.
 
@@ -288,10 +292,6 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
   make -f ./Makefile.selfsigned.mk cluster-2-cacerts &> /dev/null
   make -f ./Makefile.selfsigned.mk cluster-3-cacerts &> /dev/null
 
-  ls -aF /tmp/civo-nav-mco-demo
-#+end_src
-
-#+begin_src bash
   ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
 
@@ -480,7 +480,10 @@ We are simply applying the same resource to each cluster. If we have deployed th
 ** 5.3. Create Remote Secrets for Each Inter-Cluster Communication
 This step ensures that Istio Control Plane can talk to other clusters to find what Services are running in other clusters. However, if you need a one way traffic (such as ~cluster-1 -> cluster-3~, but not from ~cluster-3~ back to ~cluster-1~), you could simply skip creating the remote secret in ~cluster-3~.
 
-The official way for creating remote secrets use ~istioctl create-remote-secret~, and is probably the simplest approach.
+The official way for creating remote secrets use:
+    ~istioctl create-remote-secret~
+
+It is probably the simplest approach, but what it does behind the scenes is pretty simple and straightforward.
 
 *** Using Civo Clusters
 For Civo clusters, while it may not be the best approach for production ready setup, because we got the admin access kubeconfig files, we can simply use them.
