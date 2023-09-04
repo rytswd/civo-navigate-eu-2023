@@ -287,10 +287,10 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-
 #+begin_src bash
   ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
+
 
 *** 2.4. Create istio-system namespace in each cluster.
 #+begin_src bash
@@ -298,6 +298,7 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
   kubectl create namespace --context cluster-2 istio-system;
   kubectl create namespace --context cluster-3 istio-system;
 #+end_src
+
 
 *** 2.5. Create `cacerts` secret in each cluster.
 #+begin_src bash
@@ -321,6 +322,7 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
       --from-file=./certs/cluster-3/root-cert.pem \
       --from-file=./certs/cluster-3/cert-chain.pem
 #+end_src
+
 
 * 3. Install Istio Control Plane
 After ensuring CA Certificates are in place, we can now move onto installing Istio.
@@ -347,6 +349,7 @@ Pull out the Istio installation configs from the gzipped copy, using ~--strip~ a
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
+
 ** 3.2. Label ~istio-system~ Namespace with Network Topology
 Because we have created the ~istio-system~ namespace when creating the certificates, we are simply labeling the namespaces in this step. This label is important for Istio Control Plane to know which network they belong to. In this case, we are labeling all the namespaces with different network names, meaning we are installing Istio based on multi-primary on different networks.
 
@@ -361,6 +364,7 @@ Because we have created the ~istio-system~ namespace when creating the certifica
       --context=cluster-3 \
       istio-system topology.istio.io/network=cluster-3-network
 #+end_src
+
 
 ** 3.3. Install Istio Control Plane
 After the namespace is configured, we can finally move to install Istio to each cluster.
@@ -380,6 +384,7 @@ Because of the use of direct manifests, you will see an error due to the race co
       -f ./istio/installation/istiod-manifests-cluster-3.yaml
 #+end_src
 
+
 * 4. Install Istio Data Plane
 Istio Control Plane is only a part of the story for the multi-cluster communication. We have to have an extra Istio Data Plane setup of creating Istio IngressGateway, so that any traffic coming from other clusters can be checked with mTLS.
 
@@ -398,6 +403,7 @@ Similar to the Control Plane installation, the installation spec is created base
   kubectl apply --context cluster-3 \
       -f ./istio/installation/istio-gateway-manifests-cluster-3.yaml
 #+end_src
+
 
 * 5. Establish Multi-Cluster Connections
 At this point, we have Istio Control Plane and Data Plane installed in all the clusters. However, each cluster is running on their own, and they don't know about other clusters.
@@ -447,6 +453,7 @@ This simply ensures that Istio IngressGateway would receive incoming traffic to 
   ls -aF /tmp/civo-nav-mco-demo/istio/usage/cross-network-gateway.yaml
 #+end_src
 
+
 ** 5.2. Apply ~cross-network-gateway~ Resource to Each Cluster
 We are simply applying the same resource to each cluster. If we have deployed the Istio IngressGateway based on different labels, we would need to adjust the spec accordingly, but in this simple example, the only difference between the Istio IngressGateways deployed in each cluster is the network name only, and thus can use the same configuration for all.
 
@@ -459,7 +466,6 @@ We are simply applying the same resource to each cluster. If we have deployed th
       -f ./istio/usage/cross-network-gateway.yaml
   kubectl apply --context cluster-3 \
       -f ./istio/usage/cross-network-gateway.yaml
-
 #+end_src
 
 ** 5.3. Create Remote Secrets for Each Inter-Cluster Communication
