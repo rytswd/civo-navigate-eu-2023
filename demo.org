@@ -24,7 +24,7 @@ You will need to have the following installed.
 
 For the simplicity sake, the demo tries to use as few tools as possible. They are not meant to be the efficient setup, but would be a good starting point.
 
-Also, each step is designed to be executed one by one, and thus you will see extra ~cd~ and other shell setup.
+Also, each step is designed to be executed one by one, can be invoked from different shell sessions, and thus you will see extra ~cd~ and other shell setup repeating.
 
 * 1. Prepare for Demo Steps
 In order to ensure easy reproducible demo steps, let's start by creating an empty directory first.
