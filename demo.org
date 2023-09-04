@@ -563,7 +563,93 @@ For Civo clusters, while it may not be the best approach for production ready se
 #+end_src
 
 *** Using KinD clusters
-For KinD based testing, however, it is actually simpler to use the kubeconfig directly, which would allow us not to consider the Kubernetes API Server discovery. The kubeconfig used here comes from the step to generate KinD clusters.
+For KinD based testing, it is actually simpler to use the kubeconfig directly, which would allow us not to consider the Kubernetes API Server discovery. The kubeconfig used here comes from the step to generate KinD clusters.
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  # This step is for cluster-1 -> cluster-2
+  CONTEXT=cluster-1
+  CLUSTER=cluster-2
+
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      create secret generic istio-remote-secret-$CLUSTER \
+      --from-file=kind-${CLUSTER}-kubeconfig.yaml
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      annotate secret istio-remote-secret-$CLUSTER \
+      networking.istio.io/cluster=$CLUSTER
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      label secret istio-remote-secret-$CLUSTER \
+      istio/multiCluster=true
+#+end_src
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  # This step is for cluster-2 -> cluster-1
+  CONTEXT=cluster-2
+  CLUSTER=cluster-1
+
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      create secret generic istio-remote-secret-$CLUSTER \
+      --from-file=kind-${CLUSTER}-kubeconfig.yaml
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      annotate secret istio-remote-secret-$CLUSTER \
+      networking.istio.io/cluster=$CLUSTER
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      label secret istio-remote-secret-$CLUSTER \
+      istio/multiCluster=true
+#+end_src
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  # This step is for cluster-1 -> cluster-3
+  CONTEXT=cluster-1
+  CLUSTER=cluster-3
+
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      create secret generic istio-remote-secret-$CLUSTER \
+      --from-file=kind-${CLUSTER}-kubeconfig.yaml
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      annotate secret istio-remote-secret-$CLUSTER \
+      networking.istio.io/cluster=$CLUSTER
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      label secret istio-remote-secret-$CLUSTER \
+      istio/multiCluster=true
+#+end_src
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  # This step is for cluster-2 -> cluster-3
+  CONTEXT=cluster-2
+  CLUSTER=cluster-3
+
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      create secret generic istio-remote-secret-$CLUSTER \
+      --from-file=kind-${CLUSTER}-kubeconfig.yaml
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      annotate secret istio-remote-secret-$CLUSTER \
+      networking.istio.io/cluster=$CLUSTER
+  kubectl --context $CONTEXT \
+      --namespace istio-system \
+      label secret istio-remote-secret-$CLUSTER \
+      istio/multiCluster=true
+#+end_src
+
+
 
 * 6. Install Prometheus
 There are several ways to install Prometheus, but when handling Service Mesh metrics, you can expect high cardinality which you need to manage based on your business requirements.
