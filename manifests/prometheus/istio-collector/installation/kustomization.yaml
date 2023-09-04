@@ -9,4 +9,4 @@ resources:
   - istio-collector.yaml
 
 patches:
-  - patch-crb-namespace.yaml
+  - path: patch-crb-namespace.yaml
