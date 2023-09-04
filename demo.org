@@ -40,8 +40,8 @@ Because we would like to see all the file contents for better understanding of w
 #+begin_src bash :noweb-ref demo-step-1
   cd /tmp/civo-nav-mco-demo
 
-  curl -sSL https://codeload.github.com/rytswd/kubecon-eu-2023/tar.gz/main \
-      -o kubecon-eu-2023.tar.gz
+  curl -sSL https://codeload.github.com/rytswd/civo-navigate-eu-2023/tar.gz/main \
+      -o civo-navigate-eu-2023.tar.gz
 
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
@@ -173,7 +173,7 @@ Pull out the Istio installation configs from the gzipped copy, using ~--strip~ a
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
-  tar -xz -f kubecon-eu-2023.tar.gz \
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 kubecon-eu-2023-main/manifests/istio/installation
 
   ls -aF /tmp/civo-nav-mco-demo
@@ -238,7 +238,7 @@ In this step, we will look at each step of establishing the connection between c
 
 ** 5.1. Pull Out Cross Network ~Gateway~ Configuration
 
-Like KinD configurations, we can pull out the relevant Istio configuration specifically for ~Gateway~ from kubecon-eu-2023.tar.gz, using ~--strip~ argument to simplify the directory structure.
+Like KinD configurations, we can pull out the relevant Istio configuration specifically for ~Gateway~ from civo-navigate-eu-2023.tar.gz, using ~--strip~ argument to simplify the directory structure.
 
 Istio's cross-network-gateway is a simple ~Gateway~ CR provided by the Istio official repository (you can use a script to generate this). With this resource, we can configure Istio IngressGateway (and other Data Plane components).
 
@@ -269,7 +269,7 @@ This simply ensures that Istio IngressGateway would receive incoming traffic to 
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
-  tar -xz -f kubecon-eu-2023.tar.gz \
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 kubecon-eu-2023-main/manifests/istio/usage/cross-network-gateway.yaml
 
   ls -aF /tmp/civo-nav-mco-demo
@@ -415,7 +415,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
-  tar -xz -f kubecon-eu-2023.tar.gz \
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
         --strip=2 kubecon-eu-2023-main/manifests/prometheus
 
   ls -aF /tmp/civo-nav-mco-demo
@@ -479,7 +479,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
-  tar -xz -f kubecon-eu-2023.tar.gz \
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 kubecon-eu-2023-main/manifests/grafana
 
   ls -aF /tmp/civo-nav-mco-demo
