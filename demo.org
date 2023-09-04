@@ -256,8 +256,10 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
       tar -xz --strip=2 istio-1.18.2/tools/certs;
 
   ls -aF /tmp/civo-nav-mco-demo
+#+end_src
 
-  # add another ls
+#+begin_src bash
+  ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
 
 *** 2.2. Create Root CA Certificate.
