@@ -26,7 +26,7 @@ For the simplicity sake, the demo tries to use as few tools as possible. They ar
 
 Also, each step is designed to be executed one by one, can be invoked from different shell sessions, and thus you will see extra ~cd~ and other shell setup repeating.
 
-* 1. Prepare for Demo Steps
+* 0. Prepare for Demo Steps
 In order to ensure easy reproducible demo steps, let's start by creating an empty directory first.
 
 #+begin_src bash :noweb-ref demo-step-1
@@ -46,6 +46,8 @@ Because we would like to see all the file contents for better understanding of w
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
+
+* 1. Prepare Clusters
 
 ** Using Civo Clusters
 Using Civo clusters is a great way to get started quickly, and also to be able to share the environment with others. If you are using Civo clusters, let's make sure we have all the cluster credentials in place.
@@ -296,15 +298,16 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
 
 *** 2.4. Create istio-system namespace in each cluster.
 #+begin_src bash
-  kubectl create namespace --context cluster-1 istio-system;
-  kubectl create namespace --context cluster-2 istio-system;
-  kubectl create namespace --context cluster-3 istio-system;
+  kubectl create namespace --context cluster-1 istio-system
+  kubectl create namespace --context cluster-2 istio-system
+  kubectl create namespace --context cluster-3 istio-system
 #+end_src
 
 
-*** 2.5. Create `cacerts` secret in each cluster.
+*** 2.5. Create ~cacerts~ secret in each cluster.
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
+
   kubectl create secret --context cluster-1 \
       generic cacerts -n istio-system \
       --from-file=./certs/cluster-1/ca-cert.pem \
@@ -349,6 +352,10 @@ Pull out the Istio installation configs from the gzipped copy, using ~--strip~ a
       --strip=2 civo-navigate-eu-2023-main/manifests/istio/installation
 
   ls -aF /tmp/civo-nav-mco-demo
+#+end_src
+
+#+begin_src bash
+  ls -aF /tmp/civo-nav-mco-demo/istio/installation
 #+end_src
 
 
@@ -414,7 +421,7 @@ In this step, we will look at each step of establishing the connection between c
 
 ** 5.1. Pull Out Cross Network ~Gateway~ Configuration
 
-Like KinD configurations, we can pull out the relevant Istio configuration specifically for ~Gateway~ from civo-navigate-eu-2023.tar.gz, using ~--strip~ argument to simplify the directory structure.
+Like KinD configurations, we can pull out the relevant Istio configuration specifically for ~Gateway~ from ~civo-navigate-eu-2023.tar.gz~, using ~--strip~ argument to simplify the directory structure.
 
 Istio's cross-network-gateway is a simple ~Gateway~ CR provided by the Istio official repository (you can use a script to generate this). With this resource, we can configure Istio IngressGateway (and other Data Plane components).
 
@@ -452,7 +459,7 @@ This simply ensures that Istio IngressGateway would receive incoming traffic to 
 #+end_src
 
 #+begin_src bash
-  ls -aF /tmp/civo-nav-mco-demo/istio/usage/cross-network-gateway.yaml
+  ls -aF /tmp/civo-nav-mco-demo/istio/usage
 #+end_src
 
 
@@ -475,7 +482,7 @@ This step ensures that Istio Control Plane can talk to other clusters to find wh
 
 The official way for creating remote secrets use ~istioctl create-remote-secret~, and is probably the simplest approach.
 
-*** Using Civo clusters
+*** Using Civo Clusters
 For Civo clusters, while it may not be the best approach for production ready setup, because we got the admin access kubeconfig files, we can simply use them.
 
 #+begin_src bash
@@ -562,7 +569,7 @@ For Civo clusters, while it may not be the best approach for production ready se
       istio/multiCluster=true
 #+end_src
 
-*** Using KinD clusters
+*** Using KinD Clusters
 For KinD based testing, it is actually simpler to use the kubeconfig directly, which would allow us not to consider the Kubernetes API Server discovery. The kubeconfig used here comes from the step to generate KinD clusters.
 
 #+begin_src bash
@@ -696,6 +703,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
 
 
 ** 6.5. Deploy Prometheus for Istio Metrics
+
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
