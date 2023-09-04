@@ -1,6 +1,6 @@
 # Civo Navigate Europe 2023
 
-![slide](/docs/assets/slide-title.png)
+![slide](https://github.com/rytswd/civo-navigate-eu-2023/assets/23435099/4cd901ec-f942-44e8-82f3-2e17dd3d2930)
 
 > Date: 5th September, 2023
 >
