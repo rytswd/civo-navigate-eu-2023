@@ -6,7 +6,7 @@ The demo steps here are to go through each step for setting up multi-cluster obs
 For the actual demo steps, I will be navigating through bash commands, and effectively running each command separately.
 
 Follow along each code block and copy paste if you prefer step by step setup.
-If you prefer the setup to complete with a dedicated shell script, please check out [[/demo.sh][~demo.sh~]] file.
+If you prefer the setup to complete with a dedicated shell script, please check out [[/demo.sh][demo.sh]] file.
 
 
 *NOTE: Emacs and Org Mode*
