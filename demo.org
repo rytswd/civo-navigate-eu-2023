@@ -650,7 +650,6 @@ For KinD based testing, it is actually simpler to use the kubeconfig directly, w
 #+end_src
 
 
-
 * 6. Install Prometheus
 There are several ways to install Prometheus, but when handling Service Mesh metrics, you can expect high cardinality which you need to manage based on your business requirements.
 
