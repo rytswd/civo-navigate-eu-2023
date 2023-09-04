@@ -79,6 +79,47 @@ Note how this step touches the existing configuration, and global env variable. 
   }
 #+end_src
 
+** Using KinD Clusters
+Using KinD clusters allows anyone to test the multi-cluster scenario without incurring any extra running cost (provided that your machine has machine spec to run multiple clusters). Because of the way KinD clusters work and network setup with Docker, it may seem more complicated than using other cloud offerings.
+
+When using KinD clusters, do note how the cluster names get prefix of =kind-=. This does not match with the rest of the steps in this document. You can either change the name of the cluster for each step when copy/pasting the commands, or you can change the context name using tools such as ~kubectx~.
+
+*** Pull Out KinD Configuraiton Files
+#+begin_src bash
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
+      --strip=2 civo-navigate-eu-2023-main/tools/kind-config
+#+end_src
+
+*** ⚠️ NOTE: About Docker Network
+In this demo, we make use of [[https://metallb.universe.tf/][MetalLB]] for creating separate networks and using LoadBalancer Service. Depending on your Docker network setup, you will need to update the following files:
+
+- /tmp/civo-navigate-mco-demo/kind-config/cluster-1-v1.26.yaml
+- /tmp/civo-navigate-mco-demo/kind-config/cluster-2-v1.26.yaml
+- /tmp/civo-navigate-mco-demo/kind-config/cluster-3-v1.26.yaml
+
+In each file, ensure that kubeadmConfigPatches -> apiServer -> certSANs matches with the following CIDR:
+
+#+begin_src bash
+  docker network inspect kind | jq -r ".[].IPAM.Config[0].Subnet"
+#+end_src
+
+*** Start KinD Clusters
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  kind create cluster \
+       --name cluster-1 \
+       --config ./tools/kind-config/cluster-1-v1.26.yaml
+  kind create cluster \
+       --name cluster-2 \
+       --config ./tools/kind-config/cluster-2-v1.26.yaml
+  kind create cluster \
+       --name cluster-3 \
+       --config ./tools/kind-config/cluster-3-v1.26.yaml
+#+end_src
+
+
+
 * 2. Create CA Certificates
 
 ** 2.1. Copy CA Certificate generation scripts from Istio.
