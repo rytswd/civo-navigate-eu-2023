@@ -6,5 +6,5 @@ namespace: monitoring
 resources:
   - install-prometheus-operator.yaml
 
-patchesStrategicMerge:
+patches:
   - patch-crb-namespace.yaml

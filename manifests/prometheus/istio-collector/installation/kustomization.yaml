@@ -8,5 +8,5 @@ namespace: monitoring
 resources:
   - istio-collector.yaml
 
-patchesStrategicMerge:
+patches:
   - patch-crb-namespace.yaml
