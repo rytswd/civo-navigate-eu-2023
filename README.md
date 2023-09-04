@@ -36,7 +36,7 @@ Thanks to Civo, we can spawn a real cluster for testing.
 There are a few ways to go through the demo steps.
 
 - Open up [demo.org](/demo.org) and follow each step
-- Run [demo.sh](/demo.sh)
+- Run [demo.sh](/demo.sh) -- ℹ️ NOTE: This is WIP.
 - Using Emacs with Org Babel Execute
 
 For my talk, I use Emacs because that allows me to simply execute without any

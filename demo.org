@@ -803,8 +803,8 @@ With that, we can check more out with http://localhost:3000!
 
 * Appendix
 
-** Generate Shell Script
-The below code is only to create a corresponding shell script based on the file content here. You can 
+** WIP: Generate Shell Script
+The below code is only to create a corresponding shell script based on the file content here.
 #+begin_src bash :tangle demo.sh :noweb yes
   #!/usr/bin/env bash
 
