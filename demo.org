@@ -82,20 +82,23 @@ Note how this step touches the existing configuration, and global env variable. 
 ** Using KinD Clusters
 Using KinD clusters allows anyone to test the multi-cluster scenario without incurring any extra running cost (provided that your machine has machine spec to run multiple clusters). Because of the way KinD clusters work and network setup with Docker, it may seem more complicated than using other cloud offerings.
 
-When using KinD clusters, do note how the cluster names get prefix of =kind-=. This does not match with the rest of the steps in this document. You can either change the name of the cluster for each step when copy/pasting the commands, or you can change the context name using tools such as ~kubectx~.
 
 *** Pull Out KinD Configuraiton Files
 #+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
   tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 civo-navigate-eu-2023-main/tools/kind-config
+
+  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
 *** ⚠️ NOTE: About Docker Network
 In this demo, we make use of [[https://metallb.universe.tf/][MetalLB]] for creating separate networks and using LoadBalancer Service. Depending on your Docker network setup, you will need to update the following files:
 
-- /tmp/civo-navigate-mco-demo/kind-config/cluster-1-v1.26.yaml
-- /tmp/civo-navigate-mco-demo/kind-config/cluster-2-v1.26.yaml
-- /tmp/civo-navigate-mco-demo/kind-config/cluster-3-v1.26.yaml
+- /tmp/civo-nav-mco-demo/kind-config/cluster-1-v1.26.yaml
+- /tmp/civo-nav-mco-demo/kind-config/cluster-2-v1.26.yaml
+- /tmp/civo-nav-mco-demo/kind-config/cluster-3-v1.26.yaml
 
 In each file, ensure that kubeadmConfigPatches -> apiServer -> certSANs matches with the following CIDR:
 
@@ -103,21 +106,144 @@ In each file, ensure that kubeadmConfigPatches -> apiServer -> certSANs matches 
   docker network inspect kind | jq -r ".[].IPAM.Config[0].Subnet"
 #+end_src
 
+#+begin_src bash
+  grep -A 4 "ClusterConfiguration" /tmp/civo-nav-mco-demo/kind-config/cluster-1-v1.26.yaml
+  grep -A 4 "ClusterConfiguration" /tmp/civo-nav-mco-demo/kind-config/cluster-2-v1.26.yaml
+  grep -A 4 "ClusterConfiguration" /tmp/civo-nav-mco-demo/kind-config/cluster-3-v1.26.yaml
+#+end_src
+
 *** Start KinD Clusters
+Start up KinD clusters using the above configurations. When creating the clusters, make sure to name them differently so that we can easily target the right cluster later.
+
 #+begin_src bash
   cd /tmp/civo-nav-mco-demo
 
   kind create cluster \
        --name cluster-1 \
-       --config ./tools/kind-config/cluster-1-v1.26.yaml
+       --config ./kind-config/cluster-1-v1.26.yaml
   kind create cluster \
        --name cluster-2 \
-       --config ./tools/kind-config/cluster-2-v1.26.yaml
+       --config ./kind-config/cluster-2-v1.26.yaml
   kind create cluster \
        --name cluster-3 \
-       --config ./tools/kind-config/cluster-3-v1.26.yaml
+       --config ./kind-config/cluster-3-v1.26.yaml
 #+end_src
 
+*** Export ~kubeconfig~ for Each Cluster
+~kubeconfig~ is simply added to the existing config when creating KinD clusters. We can use that to interact with the cluster, but in the multi-cluster setup with Istio, we need to ensure Istio Control Plane can talk to other clusters' API server. This can be handled with ~istioctl~, but in the following steps, we will use the kubeconfig directly to see what is actually needed.
+
+Also, when using KinD clusters, note how the cluster names get prefix of ~kind-~. This does not match with the rest of the steps in this document. You can either change the name of the cluster for each step when copy/pasting the commands, or you can change the context name using tools such as [[https://github.com/ahmetb/kubectx][kubectx]].
+
+For making things simple for the rest of steps, we are actually using ~kubectx~ CLI to name each cluster without the ~kind-~ prefix.
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  kubectx cluster-1=kind-cluster-1
+  kubectx cluster-2=kind-cluster-2
+  kubectx cluster-3=kind-cluster-3
+
+  kind export kubeconfig \
+       --name cluster-1 \
+       --kubeconfig ./kind-cluster-1-kubeconfig.yaml \
+       --internal
+  kind export kubeconfig \
+       --name cluster-2 \
+       --kubeconfig ./kind-cluster-2-kubeconfig.yaml \
+       --internal
+  kind export kubeconfig \
+       --name cluster-3 \
+       --kubeconfig ./kind-cluster-3-kubeconfig.yaml \
+       --internal
+#+end_src
+
+*** Install MetalLB
+MetalLB can make it a more realistic cluster setup, and allow you to not need to consider too much about the Docker Network (except for the IP CIDR range mentioned above).
+
+This step isn't required if you are to work out the network setup using NodePort within Docker Network, and also if you are not using KinD, skip this step.
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  kubectl apply --context cluster-1 \
+          -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+  kubectl apply --context cluster-2 \
+          -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+  kubectl apply --context cluster-3 \
+          -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+#+end_src
+
+*** Wait For MetalLB Installation
+#+begin_src bash
+  kubectl rollout --context cluster-1 \
+          status deployment/controller -n metallb-system
+  kubectl rollout --context cluster-2 \
+          status deployment/controller -n metallb-system
+  kubectl rollout --context cluster-3 \
+          status deployment/controller -n metallb-system
+#+end_src
+
+*** Pull Out MetalLB Configuration Files
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  tar -xz -f civo-navigate-eu-2023.tar.gz \
+      --strip=2 civo-navigate-eu-2023-main/tools/metallb/usage
+
+  ls -aF /tmp/civo-nav-mco-demo
+#+end_src
+
+*** ⚠️ NOTE: About Docker Network
+Based on your Docker network setup, you will need to update the following files:
+
+- /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-1.yaml
+- /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-2.yaml
+- /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-3.yaml
+
+In each file, ensure that IPAddressPool spec.addresses matches with the following CIDR:
+
+#+begin_src bash
+  docker network inspect kind | jq -r ".[].IPAM.Config[0].Subnet"
+#+end_src
+
+#+begin_src bash
+  grep -A 6 "IPAddressPool" /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-1.yaml
+  grep -A 6 "IPAddressPool" /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-2.yaml
+  grep -A 6 "IPAddressPool" /tmp/civo-nav-mco-demo/metallb/usage/metallb-cluster-3.yaml
+#+end_src
+
+Update the files before moving onto the next steps.
+
+For this demo setup, the MetalLB CIDR ranges are purposely made small. If you plan to play with more LB backed services, adjust the CIDRs accordingly. However, as all the KinD clusters will need to talk to each other to establish multi-cluster connection using the LB IPs, make sure that CIDR is within the Docker Network CIDR.
+
+*** Configure MetalLB
+The files applied to each cluster is almost identical, but they have different sets of IP ranges.
+
+#+begin_src bash
+  cd /tmp/civo-nav-mco-demo
+
+  kubectl apply --context cluster-1 \
+          -f ./metallb/usage/metallb-cluster-1.yaml
+  kubectl apply --context cluster-2 \
+          -f ./metallb/usage/metallb-cluster-2.yaml
+  kubectl apply --context cluster-3 \
+          -f ./metallb/usage/metallb-cluster-3.yaml
+#+end_src
+
+*** Ensure Kubernetes API Servers Are Accessible
+In each cluster, we are updating the ~kubernetes.default.svc~ Service to use LoadBalancer instead of ClusterIP. As the MetalLB is configured in the previous step, each cluster can have the Kubernetes API server exposed to other clusters.
+
+#+begin_src bash
+  kubectl patch svc kubernetes \
+          --context cluster-1 \
+          -p '{"spec": {"type": "LoadBalancer"}}'
+  kubectl patch svc kubernetes \
+          --context cluster-2 \
+          -p '{"spec": {"type": "LoadBalancer"}}'
+  kubectl patch svc kubernetes \
+          --context cluster-3 \
+          -p '{"spec": {"type": "LoadBalancer"}}'
+#+end_src
 
 
 * 2. Create CA Certificates
