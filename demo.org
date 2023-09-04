@@ -1,6 +1,7 @@
 #+title: Demo Steps
 The demo steps here are to go through each step for setting up multi-cluster observability. It is meant to be a detailed document with clarifying what each step does. Because Istio installation itself can be a simple one command operation, understanding the internals is crucial to deploying and managing Istio and multi-cluster observability foundation. 
 
+
 *NOTE: Demo Steps*
 For the actual demo steps, I will be navigating through bash commands, and effectively running each command separately.
 
@@ -9,7 +10,7 @@ If you prefer the setup to complete with a dedicated shell script, please check 
 
 
 *NOTE: Emacs and Org Mode*
-Because there will be a lot of code associated in this, I'm using Emacs with Org Mode file to run shell scripts, which are simple in essence, but can be time consuming to handle otherwise.
+Due to the time limitation, I'm using Emacs to execute source code block in this Org Mode file. While this is a standard Emacs feature and you can get most of the same behaviour pretty easily, there are some peculiar setup in my Emacs setup.
 
 
 
