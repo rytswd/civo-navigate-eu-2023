@@ -54,7 +54,7 @@ Using Civo clusters is a great way to get started quickly, and also to be able t
 
 ℹ️ *NOTE: Cluster Creation*
 
-Because clusters can be easily created from the Civo console, or some other tooling such as Terraform or Crossplane, I will skip that part from the demo steps here.
+Because clusters can be easily created from the Civo console, or some other tooling such as Civo CLI, Terraform or Crossplane, I will skip that part from the demo steps here.
 
 Assuming the name of the clusters created are ~cluster-1~, ~cluster-2~, and ~cluster-3~, the generated kubeconfig will each get the name like ~civo-cluster-1-kubeconfig~. The below also assumes the download directory of ~~/Downloads~.
 
