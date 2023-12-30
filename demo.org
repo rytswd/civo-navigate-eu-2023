@@ -32,17 +32,16 @@ In order to ensure easy reproducible demo steps, let's start by creating an empt
 #+begin_src bash :noweb-ref demo-step-1
   mkdir /tmp/civo-nav-mco-demo
   cd /tmp/civo-nav-mco-demo
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
 Because we would like to see all the file contents for better understanding of what happens behind the scenes, taking the copy of the main branch of the repository [[https://github.com/rytswd/civo-navigate-eu-2023]].
-#+begin_src bash :noweb-ref demo-step-1
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-1 :dir /tmp/civo-nav-mco-demo
   curl -sSL https://codeload.github.com/rytswd/civo-navigate-eu-2023/tar.gz/main \
        -o civo-navigate-eu-2023.tar.gz
+#+end_src
 
+At this point, you should have the new directory, with just a ~civo-navigate-eu-2023.tar.gz~ file.
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
@@ -63,8 +62,6 @@ Assuming the name of the clusters created are ~cluster-1~, ~cluster-2~, and ~clu
      ~/Downloads/civo-cluster-2-kubeconfig \
      ~/Downloads/civo-cluster-3-kubeconfig \
      /tmp/civo-nav-mco-demo
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
 For the sake of simplicity for remaining demo steps, merge all the cluster configurations into a single file as ~~/.kube/config~.
@@ -88,6 +85,7 @@ Note how this step touches the existing configuration, and global env variable. 
 ** Using KinD Clusters
 Using KinD clusters allows anyone to test the multi-cluster scenario without incurring any extra running cost (provided that your machine has machine spec to run multiple clusters). Because of the way KinD clusters work and network setup with Docker, it may seem more complicated than using other cloud offerings.
 
+⚠️ NOTE: In my own testing, OrbStack based Docker fails to get Istio init containers to come up cleanly. This is something I will debug further, but for now, please bear in mind that you would need to work out the Docker network to ensure Istio to work correctly.
 
 *** Pull Out KinD Configuraiton Files
 #+begin_src bash
@@ -255,59 +253,61 @@ In each cluster, we are updating the ~kubernetes.default.svc~ Service to use Loa
 * 2. Create CA Certificates
 
 ** 2.1. Copy CA Certificate generation scripts from Istio.
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-2-1 :dir /tmp/civo-nav-mco-demo
   curl -sSL https://codeload.github.com/istio/istio/tar.gz/1.18.2 |
       tar -xz --strip=2 istio-1.18.2/tools/certs;
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-#+begin_src bash
+Just to check the files were correctly pulled down
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
 
-*** 2.2. Create Root CA Certificate.
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
+** 2.2. Get into ~certs~ Directory
+Using ~pushd~ so that we can get out of this directory later with ~popd~.
+#+begin_src bash :noweb-ref demo-step-2-2 :dir /tmp/civo-nav-mco-demo
+  pushd certs > /dev/null
+#+end_src
 
-  cd certs
+** 2.3. Create Root CA Certificate.
+#+begin_src bash :noweb-ref demo-step-2-3 :dir /tmp/civo-nav-mco-demo/certs
   make -f ./Makefile.selfsigned.mk root-ca &> /dev/null
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-#+begin_src bash
+Ensure we have got the right Root cert in place
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
 
 
-*** 2.3. Create Intermediate CA Certificates for each cluster.
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
-  cd certs
+** 2.4. Create Intermediate CA Certificates for each cluster.
+#+begin_src bash :noweb-ref demo-step-2-4 :dir /tmp/civo-nav-mco-demo/certs
   make -f ./Makefile.selfsigned.mk cluster-1-cacerts &> /dev/null
   make -f ./Makefile.selfsigned.mk cluster-2-cacerts &> /dev/null
   make -f ./Makefile.selfsigned.mk cluster-3-cacerts &> /dev/null
+#+end_src
 
+Ensure we have got all the certs created for each cluster
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo/certs
 #+end_src
 
+** 2.5. Get out of ~certs~ Directory
+Following the ~pushd~ above, simply use ~popd~ to come out of ~certs~ directory.
+#+begin_src bash :noweb-ref demo-step-2-5 :dir /tmp/civo-nav-mco-demo/certs
+  popd > /dev/null
+#+end_src
 
-*** 2.4. Create istio-system namespace in each cluster.
-#+begin_src bash
+** 2.6. Create istio-system namespace in each cluster.
+#+begin_src bash :noweb-ref demo-step-2-6 :dir /tmp/civo-nav-mco-demo
   kubectl create namespace --context cluster-1 istio-system
   kubectl create namespace --context cluster-2 istio-system
   kubectl create namespace --context cluster-3 istio-system
 #+end_src
 
 
-*** 2.5. Create ~cacerts~ secret in each cluster.
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+** 2.7. Create ~cacerts~ secret in each cluster.
+#+begin_src bash :noweb-ref demo-step-2-7 :dir /tmp/civo-nav-mco-demo
   kubectl create secret --context cluster-1 \
       generic cacerts -n istio-system \
       --from-file=./certs/cluster-1/ca-cert.pem \
@@ -345,16 +345,13 @@ So with that, let's move onto install Istio, using manifests.
 ** 3.1. Copy Istio Installation Manifests
 Pull out the Istio installation configs from the gzipped copy, using ~--strip~ argument.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-3-1 :dir /tmp/civo-nav-mco-demo
   tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 civo-navigate-eu-2023-main/manifests/istio/installation
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-#+begin_src bash
+Check the installation specs.
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo/istio/installation
 #+end_src
 
@@ -362,7 +359,7 @@ Pull out the Istio installation configs from the gzipped copy, using ~--strip~ a
 ** 3.2. Label ~istio-system~ Namespace with Network Topology
 Because we have created the ~istio-system~ namespace when creating the certificates, we are simply labeling the namespaces in this step. This label is important for Istio Control Plane to know which network they belong to. In this case, we are labeling all the namespaces with different network names, meaning we are installing Istio based on multi-primary on different networks.
 
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-3-2 :dir /tmp/civo-nav-mco-demo
   kubectl label namespace \
       --context=cluster-1 \
       istio-system topology.istio.io/network=cluster-1-network
@@ -382,9 +379,7 @@ The installation manifests are in a single file, which was generated by ~istioct
 
 Because of the use of direct manifests, you will see an error due to the race condition with CRDs. While this is GitOps friendly way, there are various ways to fix this. For this demo, we can get this to work by simply running the command twice.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-  
+#+begin_src bash :noweb-ref demo-step-3-3 :dir /tmp/civo-nav-mco-demo
   kubectl apply --context cluster-1 \
       -f ./istio/installation/istiod-manifests-cluster-1.yaml
   kubectl apply --context cluster-2 \
@@ -399,9 +394,7 @@ Istio Control Plane is only a part of the story for the multi-cluster communicat
 
 Similar to the Control Plane installation, the installation spec is created based on ~istioctl manifest generate~. Istio IngressGateway installation spec is pretty simple, and this does not require any re-apply or anything.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-4 :dir /tmp/civo-nav-mco-demo
   echo "...cluster-1..."
   kubectl apply --context cluster-1 \
       -f ./istio/installation/istio-gateway-manifests-cluster-1.yaml
@@ -449,16 +442,13 @@ The configuration is quite simple:
 
 This simply ensures that Istio IngressGateway would receive incoming traffic to 15443 port based on ~*.local~ address, and simply pass it to the target service without terminating TLS (~mode: AUTO_PASSTHROUGH~). Unlike ~mode: PASSTHROUGH~, this assumes the use of mTLS, which is how inter-cluster communication works.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-5-1 :dir /tmp/civo-nav-mco-demo
   tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 civo-navigate-eu-2023-main/manifests/istio/usage/cross-network-gateway.yaml
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-#+begin_src bash
+Check the Istio usage specs.
+#+begin_src bash :dir /tmp/civo-nav-mco-demo
   ls -aF /tmp/civo-nav-mco-demo/istio/usage
 #+end_src
 
@@ -466,9 +456,7 @@ This simply ensures that Istio IngressGateway would receive incoming traffic to 
 ** 5.2. Apply ~cross-network-gateway~ Resource to Each Cluster
 We are simply applying the same resource to each cluster. If we have deployed the Istio IngressGateway based on different labels, we would need to adjust the spec accordingly, but in this simple example, the only difference between the Istio IngressGateways deployed in each cluster is the network name only, and thus can use the same configuration for all.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-5-2 :dir /tmp/civo-nav-mco-demo
   kubectl apply --context cluster-1 \
       -f ./istio/usage/cross-network-gateway.yaml
   kubectl apply --context cluster-2 \
@@ -489,8 +477,6 @@ It is probably the simplest approach, but what it does behind the scenes is pret
 For Civo clusters, while it may not be the best approach for production ready setup, because we got the admin access kubeconfig files, we can simply use them.
 
 #+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
   # This step is for cluster-1 -> cluster-2
   CONTEXT=cluster-1
   CLUSTER=cluster-2
@@ -666,14 +652,15 @@ There are several ways to install Prometheus, but when handling Service Mesh met
 In order to simulate more realistic use cases, the steps here will make use of multiple Prometheus instance, backed by Prometheus Operator. It means we can set up more Prometheus relatively easily by adding more Prometheus CR, and also have Alertmanager deployed together. Prometheus has a lot of moving parts by itself, and managing them in a declarative fashion can make those configuration details easier to grasp.
 
 ** 6.1. Create ~monitoring~ Namespace
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-6-1 :dir /tmp/civo-nav-mco-demo
   kubectl create namespace --context cluster-1 monitoring
   kubectl create namespace --context cluster-2 monitoring
   kubectl create namespace --context cluster-3 monitoring
 #+end_src
 
+
 ** 6.2. Label ~monitoring~ Namespace for Istio Sidecar Injection
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-6-2 :dir /tmp/civo-nav-mco-demo
   kubectl label --context cluster-1 \
       namespace monitoring istio-injection=enabled
   kubectl label --context cluster-2 \
@@ -682,20 +669,16 @@ In order to simulate more realistic use cases, the steps here will make use of m
       namespace monitoring istio-injection=enabled
 #+end_src
 
-** 6.3. Pull Out Prometheus Related Configurations
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
 
+** 6.3. Pull Out Prometheus Related Configurations
+#+begin_src bash :noweb-ref demo-step-6-3 :dir /tmp/civo-nav-mco-demo
   tar -xz -f civo-navigate-eu-2023.tar.gz \
         --strip=2 civo-navigate-eu-2023-main/manifests/prometheus
-
-  ls -aF /tmp/civo-nav-mco-demo
 #+end_src
 
-** 6.4. Install Prometheus Operator in Each Cluster
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
 
+** 6.4. Install Prometheus Operator in Each Cluster
+#+begin_src bash :noweb-ref demo-step-6-4 :dir /tmp/civo-nav-mco-demo
   kustomize build prometheus/operator-installation |
       kubectl apply --context cluster-1 --server-side -f -
   kustomize build prometheus/operator-installation |
@@ -706,10 +689,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
 
 
 ** 6.5. Deploy Prometheus for Istio Metrics
-
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-6-5 :dir /tmp/civo-nav-mco-demo
   kustomize build prometheus/istio-collector |
       kubectl apply --context cluster-1 -f -
   kustomize build prometheus/istio-collector |
@@ -718,9 +698,7 @@ In order to simulate more realistic use cases, the steps here will make use of m
       kubectl apply --context cluster-3 -f -
 #+end_src
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-6-5 :dir /tmp/civo-nav-mco-demo
   kustomize build prometheus/istio-federation-cluster-1 |
       kubectl apply --context cluster-1 -f -
   kustomize build prometheus/istio-federation-cluster-2 |
@@ -736,7 +714,7 @@ Note how we are only deploying Thanos into ~cluster-3~, which means we have all 
 
 We should be specifying the version of Thanos Helm Chart version to ensure reproducible setup.
 
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-7 :dir /tmp/civo-nav-mco-demo
   helm install --repo https://charts.bitnami.com/bitnami \
       --kube-context cluster-3 \
       --set receive.enabled=true \
@@ -749,7 +727,7 @@ Following the installation of Thanos, we are also installing Grafana only in ~cl
 ** 8.1. Install Grafana Using Helm Chart
 Grafana installation is another simple Helm Chart setup. Again, we should be specifying the Helm Chart version.
 
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-8-1 :dir /tmp/civo-nav-mco-demo
   helm install --repo https://grafana.github.io/helm-charts \
       --kube-context cluster-3 \
       --set sidecar.dashboards.enabled=true \
@@ -760,9 +738,7 @@ Grafana installation is another simple Helm Chart setup. Again, we should be spe
 ** 8.2. Pull Out Grafana Related Configurations
 We have a very simple sample dashboard specs in the repository, so pull that out from the repository.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-8-2 :dir /tmp/civo-nav-mco-demo
   tar -xz -f civo-navigate-eu-2023.tar.gz \
       --strip=2 civo-navigate-eu-2023-main/manifests/grafana
 
@@ -772,9 +748,7 @@ We have a very simple sample dashboard specs in the repository, so pull that out
 ** 8.3. Configure Grafana's Data Source and Create Sample Dashboard
 And simply apply data source and dashboard setup for demonstration purpose.
 
-#+begin_src bash
-  cd /tmp/civo-nav-mco-demo
-
+#+begin_src bash :noweb-ref demo-step-8-3 :dir /tmp/civo-nav-mco-demo
   kustomize build grafana |
       kubectl apply --context cluster-3 -f -
 #+end_src
@@ -783,7 +757,7 @@ And simply apply data source and dashboard setup for demonstration purpose.
 We can explore the metrics from Grafana.
 
 When Grafana is installed using Helm Chart, it uses the default login of ~admin~, and the password is automatically generated, which we can grab using the following command.
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-9 :dir /tmp/civo-nav-mco-demo
   kubectl get secret \
       --context cluster-3 \
       --namespace monitoring \
@@ -792,7 +766,7 @@ When Grafana is installed using Helm Chart, it uses the default login of ~admin~
 #+end_src
 
 With that, let's get port-forward for Grafana.
-#+begin_src bash
+#+begin_src bash :noweb-ref demo-step-9 :dir /tmp/civo-nav-mco-demo
   kubectl port-forward \
       --context cluster-3 \
       --namespace monitoring \
@@ -816,9 +790,88 @@ The below code is only to create a corresponding shell script based on the file 
   # shellcheck source=./demo-helper.sh
   . "$(dirname "$0")/demo-helper.sh"
 
-  execute "{
-      <<demo-step-1>>
-  }"
+  comment "Step 1."
+  execute '{
+     <<demo-step-1>>
+  }'
+
+  comment "Step 2.1."
+  execute '{
+     <<demo-step-2-1>>
+  }'
+  comment "Step 2.2."
+  execute '{
+     <<demo-step-2-2>>
+  }'
+  comment "Step 2.3."
+  execute '{
+     <<demo-step-2-3>>
+  }'
+  comment "Step 2.4."
+  execute '{
+     <<demo-step-2-4>>
+  }'
+  comment "Step 2.5."
+  execute '{
+     <<demo-step-2-5>>
+  }'
+  comment "Step 2.6."
+  execute '{
+     <<demo-step-2-6>>
+  }'
+  comment "Step 2.7."
+  execute '{
+     <<demo-step-2-7>>
+  }'
+
+  comment "Step 3.1 ~ Step 3.3."
+  execute '{
+     <<demo-step-3-1>>
+     <<demo-step-3-2>>
+     <<demo-step-3-3>>
+  }'
+  # Because of the CRD dependency, the below needs to rerun.
+  comment "Step 3.3. Rerun"
+  execute '{
+     <<demo-step-3-3>>
+  }'
+
+  comment "Step 4."
+  execute '{
+     <<demo-step-4>>
+  }'
+
+  comment "Step 5."
+  execute '{
+     <<demo-step-5-1>>
+     <<demo-step-5-2>>
+  }'
+
+  comment "Step 6."
+  execute '{
+     <<demo-step-6-1>>
+     <<demo-step-6-2>>
+     <<demo-step-6-3>>
+     <<demo-step-6-4>>
+     <<demo-step-6-5>>
+  }'
+
+  comment "Step 7."
+  execute '{
+     <<demo-step-7>>
+  }'
+
+  comment "Step 8."
+  execute '{
+     <<demo-step-8-1>>
+     <<demo-step-8-2>>
+     <<demo-step-8-3>>
+  }'
+
+  comment "Step 9."
+  execute '{
+     <<demo-step-9>>
+  }'
 
 #+end_src
 
