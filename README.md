@@ -11,11 +11,9 @@
 
 Official Website: https://www.civo.com/navigate/schedule
 
-Original Recording: _To be updated_
+Original Recording: https://youtu.be/BAubdQezZWE?si=D1whrHt_oPw1WSdU
 
 Original Slide: https://dub.sh/civo-navigate-eu-2023-mco
-
-Follow-up Video: _To be added_
 
 Related Talk:
 [Multi-Cluster Observability with Service Mesh - That Is a Lot of Moving Parts!?](https://github.com/rytswd/kubecon-eu-2023)
@@ -77,16 +75,20 @@ compute resource on your machine.
 
 ### Detailed Steps
 
-Please check out [Demo Steps](demo.org) for details.
+Please check out [demo.org](demo.org) for details.
 
 ### Clean Up
 
-To be updated
+If you followed the demo steps above, you can clean up by simply removing the clusters.
+
+```sh
+{
+    kind delete cluster --name cluster-1
+    kind delete cluster --name cluster-2
+    kind delete cluster --name cluster-3
+}
+```
 
 ### Troubleshooting
 
-To be updated
-
-## 🔎 References
-
-To be updated
+If you found any misbehaviour with the setup, please feel free to create an issue. While I'm not intending to maintain with the latest details here, I still check activities and may be able to help.
