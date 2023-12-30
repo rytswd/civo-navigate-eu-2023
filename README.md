@@ -79,7 +79,7 @@ Please check out [demo.org](demo.org) for details.
 
 ### Clean Up
 
-If you followed the demo steps above, you can clean up by simply removing the clusters.
+If you followed the demo steps above using KinD, you can clean up by simply removing the clusters.
 
 ```sh
 {
@@ -88,6 +88,8 @@ If you followed the demo steps above, you can clean up by simply removing the cl
     kind delete cluster --name cluster-3
 }
 ```
+
+If you followed the demo steps with Civo clusters, you can either use Civo console, or CLI to delete the clusters.
 
 ### Troubleshooting
 
